@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Text, VStack, HStack, Box, Button, Table, Thead, Tbody, Tr, Th, Td, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, FormControl, FormLabel, Input, Select, useDisclosure } from "@chakra-ui/react";
 import { FaPlus, FaEdit } from "react-icons/fa";
 
@@ -13,12 +13,22 @@ const Index = () => {
     setCurrentTransaction({ ...currentTransaction, [name]: value });
   };
 
-  const handleAddTransaction = () => {
-    if (isEditing) {
-      setTransactions(transactions.map((txn) => (txn.id === currentTransaction.id ? currentTransaction : txn)));
-    } else {
-      setTransactions([...transactions, { ...currentTransaction, id: transactions.length + 1 }]);
+  useEffect(() => {
+    const storedTransactions = localStorage.getItem("transactions");
+    if (storedTransactions) {
+      setTransactions(JSON.parse(storedTransactions));
     }
+  }, []);
+
+  const handleAddTransaction = () => {
+    let updatedTransactions;
+    if (isEditing) {
+      updatedTransactions = transactions.map((txn) => (txn.id === currentTransaction.id ? currentTransaction : txn));
+    } else {
+      updatedTransactions = [...transactions, { ...currentTransaction, id: transactions.length + 1 }];
+    }
+    setTransactions(updatedTransactions);
+    localStorage.setItem("transactions", JSON.stringify(updatedTransactions));
     setCurrentTransaction({ id: "", description: "", amount: "", status: "", transaction_date: "" });
     setIsEditing(false);
     onClose();
@@ -30,7 +40,9 @@ const Index = () => {
     onOpen();
   };
 
-  const totalAmount = transactions.reduce((acc, txn) => acc + parseFloat(txn.amount || 0), 0);
+  const totalAmount = transactions.reduce((acc, txn) => {
+    return txn.status === "credit" ? acc + parseFloat(txn.amount || 0) : acc - parseFloat(txn.amount || 0);
+  }, 0);
 
   return (
     <Container centerContent maxW="container.md" py={10}>
