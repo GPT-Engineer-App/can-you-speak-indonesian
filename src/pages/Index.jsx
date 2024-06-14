@@ -7,6 +7,8 @@ const Index = () => {
   const [transactions, setTransactions] = useState([]);
   const [currentTransaction, setCurrentTransaction] = useState({ id: "", description: "", amount: "", status: "", transaction_date: "" });
   const [isEditing, setIsEditing] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -40,6 +42,16 @@ const Index = () => {
     onOpen();
   };
 
+  const handleDateFilter = () => {
+    const filteredTransactions = transactions.filter((txn) => {
+      const txnDate = new Date(txn.transaction_date);
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      return txnDate >= start && txnDate <= end;
+    });
+    setTransactions(filteredTransactions);
+  };
+
   const totalAmount = transactions.reduce((acc, txn) => {
     return txn.status === "credit" ? acc + parseFloat(txn.amount || 0) : acc - parseFloat(txn.amount || 0);
   }, 0);
@@ -48,7 +60,11 @@ const Index = () => {
     <Container centerContent maxW="container.md" py={10}>
       <VStack spacing={4} width="100%">
         <HStack justifyContent="space-between" width="100%">
-          <Text fontSize="2xl">Ledger</Text>
+          <HStack>
+            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <Button onClick={handleDateFilter}>Filter</Button>
+          </HStack>
           <Button leftIcon={<FaPlus />} colorScheme="teal" onClick={onOpen}>
             Add Transaction
           </Button>
